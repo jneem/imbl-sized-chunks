@@ -16,6 +16,13 @@ pub struct Iter<'a, A, const N: usize> {
     pub(crate) remaining: usize,
 }
 
+// Implement Clone instead of deriving, because we want to be Clone even if A isn't.
+impl<'a, A, const N: usize> Clone for Iter<'a, A, N> {
+    fn clone(&self) -> Self {
+        Iter { ..*self }
+    }
+}
+
 impl<'a, A, const N: usize> Iterator for Iter<'a, A, N> {
     type Item = &'a A;
 

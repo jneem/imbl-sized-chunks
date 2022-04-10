@@ -11,6 +11,19 @@ where
     pub(crate) chunk: &'a SparseChunk<A, N>,
 }
 
+// Implement Clone instead of deriving, because we want to be Clone even if A isn't.
+impl<'a, A, const N: usize> Clone for Iter<'a, A, N>
+where
+    BitsImpl<N>: Bits,
+{
+    fn clone(&self) -> Self {
+        Iter {
+            indices: self.indices.clone(),
+            chunk: self.chunk,
+        }
+    }
+}
+
 impl<'a, A, const N: usize> Iterator for Iter<'a, A, N>
 where
     BitsImpl<N>: Bits,
