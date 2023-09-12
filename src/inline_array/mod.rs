@@ -282,9 +282,15 @@ impl<A, T> InlineArray<A, T> {
             0,
             "Unaligned header"
         );
-        assert!(mem::size_of::<Self>() == mem::size_of::<T>() || mem::align_of::<T>() < mem::align_of::<Self>());
+        assert!(
+            mem::size_of::<Self>() == mem::size_of::<T>()
+                || mem::align_of::<T>() < mem::align_of::<Self>()
+        );
         assert_eq!(0, unsafe { self_.data() } as usize % mem::align_of::<A>());
-        assert_eq!(0, unsafe { self_.data_mut() } as usize % mem::align_of::<A>());
+        assert_eq!(
+            0,
+            unsafe { self_.data_mut() } as usize % mem::align_of::<A>()
+        );
         assert!(Self::ELEMENT_SKIP == 0 || Self::HEADER_SKIP == 0);
         unsafe { ptr::write(self_.len_mut(), 0usize) };
         self_
