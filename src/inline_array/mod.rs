@@ -391,6 +391,22 @@ impl<A, T> InlineArray<A, T> {
         out
     }
 
+    /// Shortens the array, keeping the first `len` elements and dropping the
+    /// rest.
+    ///
+    /// If `len` is greater or equal to the array's current length, this has no
+    /// effect.
+    pub fn truncate(&mut self, len: usize) {
+        if len >= self.len() {
+            return;
+        }
+
+        unsafe {
+            ptr::drop_in_place::<[A]>(&mut (**self)[len..]);
+            *self.len_mut() = len;
+        }
+    }
+
     #[inline]
     unsafe fn drop_contents(&mut self) {
         ptr::drop_in_place::<[A]>(&mut **self) // uses DerefMut
@@ -625,6 +641,21 @@ mod test {
             for _i in 0..8 {
                 chunk.pop();
             }
+            assert_eq!(8, counter.load(Ordering::Relaxed));
+        }
+        assert_eq!(0, counter.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn truncate() {
+        let counter = AtomicUsize::new(0);
+        {
+            let mut chunk: InlineArray<DropTest<'_>, [usize; 32]> = InlineArray::new();
+            for _i in 0..16 {
+                chunk.push(DropTest::new(&counter));
+            }
+            assert_eq!(16, counter.load(Ordering::Relaxed));
+            chunk.truncate(8);
             assert_eq!(8, counter.load(Ordering::Relaxed));
         }
         assert_eq!(0, counter.load(Ordering::Relaxed));
