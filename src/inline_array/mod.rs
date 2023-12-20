@@ -282,9 +282,15 @@ impl<A, T> InlineArray<A, T> {
             0,
             "Unaligned header"
         );
-        assert!(mem::size_of::<Self>() == mem::size_of::<T>() || mem::align_of::<T>() < mem::align_of::<Self>());
+        assert!(
+            mem::size_of::<Self>() == mem::size_of::<T>()
+                || mem::align_of::<T>() < mem::align_of::<Self>()
+        );
         assert_eq!(0, unsafe { self_.data() } as usize % mem::align_of::<A>());
-        assert_eq!(0, unsafe { self_.data_mut() } as usize % mem::align_of::<A>());
+        assert_eq!(
+            0,
+            unsafe { self_.data_mut() } as usize % mem::align_of::<A>()
+        );
         assert!(Self::ELEMENT_SKIP == 0 || Self::HEADER_SKIP == 0);
         unsafe { ptr::write(self_.len_mut(), 0usize) };
         self_
@@ -383,6 +389,22 @@ impl<A, T> InlineArray<A, T> {
             }
         }
         out
+    }
+
+    /// Shortens the array, keeping the first `len` elements and dropping the
+    /// rest.
+    ///
+    /// If `len` is greater or equal to the array's current length, this has no
+    /// effect.
+    pub fn truncate(&mut self, len: usize) {
+        if len >= self.len() {
+            return;
+        }
+
+        unsafe {
+            ptr::drop_in_place::<[A]>(&mut (**self)[len..]);
+            *self.len_mut() = len;
+        }
     }
 
     #[inline]
@@ -619,6 +641,21 @@ mod test {
             for _i in 0..8 {
                 chunk.pop();
             }
+            assert_eq!(8, counter.load(Ordering::Relaxed));
+        }
+        assert_eq!(0, counter.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn truncate() {
+        let counter = AtomicUsize::new(0);
+        {
+            let mut chunk: InlineArray<DropTest<'_>, [usize; 32]> = InlineArray::new();
+            for _i in 0..16 {
+                chunk.push(DropTest::new(&counter));
+            }
+            assert_eq!(16, counter.load(Ordering::Relaxed));
+            chunk.truncate(8);
             assert_eq!(8, counter.load(Ordering::Relaxed));
         }
         assert_eq!(0, counter.load(Ordering::Relaxed));
