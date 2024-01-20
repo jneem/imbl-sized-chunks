@@ -82,7 +82,7 @@ where
     pub(crate) chunk: SparseChunk<A, N>,
 }
 
-impl<'a, A, const N: usize> Iterator for Drain<A, N>
+impl<A, const N: usize> Iterator for Drain<A, N>
 where
     BitsImpl<N>: Bits,
 {
@@ -189,7 +189,7 @@ where
     pub(crate) chunk: SparseChunk<A, N>,
 }
 
-impl<'a, A, const N: usize> Iterator for OptionDrain<A, N>
+impl<A, const N: usize> Iterator for OptionDrain<A, N>
 where
     BitsImpl<N>: Bits,
 {
@@ -223,12 +223,7 @@ mod test {
         let vec: Vec<Option<usize>> =
             Vec::from_iter((0..64).map(|i| if i % 2 == 0 { Some(i) } else { None }));
         let chunk: SparseChunk<usize, 64> = vec.iter().cloned().collect();
-        let vec: Vec<usize> = vec
-            .iter()
-            .cloned()
-            .filter(|v| v.is_some())
-            .map(|v| v.unwrap())
-            .collect();
+        let vec: Vec<usize> = vec.iter().cloned().flatten().collect();
         assert!(vec.iter().eq(chunk.iter()));
     }
 
@@ -237,12 +232,7 @@ mod test {
         let vec: Vec<Option<usize>> =
             Vec::from_iter((0..64).map(|i| if i % 2 == 0 { Some(i) } else { None }));
         let mut chunk: SparseChunk<_, 64> = vec.iter().cloned().collect();
-        let mut vec: Vec<usize> = vec
-            .iter()
-            .cloned()
-            .filter(|v| v.is_some())
-            .map(|v| v.unwrap())
-            .collect();
+        let mut vec: Vec<usize> = vec.iter().cloned().flatten().collect();
         assert!(vec.iter_mut().eq(chunk.iter_mut()));
     }
 
@@ -251,12 +241,7 @@ mod test {
         let vec: Vec<Option<usize>> =
             Vec::from_iter((0..64).map(|i| if i % 2 == 0 { Some(i) } else { None }));
         let chunk: SparseChunk<_, 64> = vec.iter().cloned().collect();
-        let vec: Vec<usize> = vec
-            .iter()
-            .cloned()
-            .filter(|v| v.is_some())
-            .map(|v| v.unwrap())
-            .collect();
+        let vec: Vec<usize> = vec.iter().cloned().flatten().collect();
         assert!(vec.into_iter().eq(chunk.into_iter()));
     }
 

@@ -267,7 +267,10 @@ impl<A, const N: usize> Chunk<A, N> {
     #[inline]
     unsafe fn force_copy(from: usize, to: usize, count: usize, chunk: &mut Self) {
         if count > 0 {
-            ptr::copy(chunk.ptr(from), chunk.mut_ptr(to), count)
+            let data = &mut chunk.data as *mut _ as *mut A;
+            let from = data.add(from);
+            let to = data.add(to);
+            ptr::copy(from, to, count)
         }
     }
 
@@ -1115,10 +1118,10 @@ mod test {
     fn is_full() {
         let mut chunk = Chunk::<_, 64>::new();
         for i in 0..64 {
-            assert_eq!(false, chunk.is_full());
+            assert!(!chunk.is_full());
             chunk.push_back(i);
         }
-        assert_eq!(true, chunk.is_full());
+        assert!(chunk.is_full());
     }
 
     #[test]

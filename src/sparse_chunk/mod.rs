@@ -103,13 +103,13 @@ where
     /// Copy the value at an index, discarding ownership of the copied value
     #[inline]
     unsafe fn force_read(index: usize, chunk: &Self) -> A {
-        ptr::read(&chunk.values()[index as usize])
+        ptr::read(&chunk.values()[index])
     }
 
     /// Write a value at an index without trying to drop what's already there
     #[inline]
     unsafe fn force_write(index: usize, value: A, chunk: &mut Self) {
-        ptr::write(&mut chunk.values_mut()[index as usize], value)
+        ptr::write(&mut chunk.values_mut()[index], value)
     }
 
     /// Construct a new empty chunk.

@@ -623,6 +623,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -724,7 +725,7 @@ mod test {
         assert_eq!(0, InlineArray::<BigAlign, [usize; 256]>::CAPACITY);
         assert_eq!(0, bad.len());
         assert_eq!(0, bad[..].len());
-        assert_eq!(true, bad.is_full());
+        assert!(bad.is_full());
         assert_eq!(0, bad.drain().count());
         assert!(bad.pop().is_none());
         assert!(bad.remove(0).is_none());
@@ -744,7 +745,7 @@ mod test {
         let mut chunk: InlineArray<BigAlign, [BigAlign; 2]> = InlineArray::new();
         chunk.push(BigAlign(42));
         assert_eq!(
-            chunk.get(0).unwrap() as *const _ as usize % mem::align_of::<BigAlign>(),
+            chunk.first().unwrap() as *const _ as usize % mem::align_of::<BigAlign>(),
             0
         );
     }
@@ -766,7 +767,7 @@ mod test {
         let mut chunk: InlineArray<BigAlign, [BiggerAlign; 1]> = InlineArray::new();
         chunk.push(BigAlign([0; 64]));
         assert_eq!(
-            chunk.get(0).unwrap() as *const _ as usize % mem::align_of::<BigAlign>(),
+            chunk.first().unwrap() as *const _ as usize % mem::align_of::<BigAlign>(),
             0
         );
     }
