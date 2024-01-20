@@ -33,7 +33,7 @@ jobs:
                 rust:
                     - stable
                     - nightly
-                    - 1.63.0 # lowest supported version for tests
+                    - 1.56.0 # lowest supported version
         steps:
             - uses: actions/checkout@v2
             - uses: actions-rs/toolchain@v1
