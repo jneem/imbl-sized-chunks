@@ -246,7 +246,7 @@ where
     /// Make an iterator of references to the values contained in the array.
     pub fn iter(&self) -> Iter<'_, A, N> {
         Iter {
-            indices: self.indices(),
+            bitmap: self.map,
             chunk: self,
         }
     }
