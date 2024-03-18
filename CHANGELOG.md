@@ -9,7 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### CHANGED
 
--   Improved the performance of SpareChunk iterators.
+-   Improved the performance of SparseChunk iterators.
 
 ## [0.1.2] - 2024-01-20
 
