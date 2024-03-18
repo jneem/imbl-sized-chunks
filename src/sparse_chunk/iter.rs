@@ -1,4 +1,4 @@
-use bitmaps::{Bitmap, Bits, BitsImpl, Iter as BitmapIter};
+use bitmaps::{Bitmap, Bits, BitsImpl};
 
 use super::SparseChunk;
 
@@ -7,7 +7,7 @@ pub struct Iter<'a, A, const N: usize>
 where
     BitsImpl<N>: Bits,
 {
-    pub(crate) indices: BitmapIter<'a, N>,
+    pub(crate) bitmap: Bitmap<N>,
     pub(crate) chunk: &'a SparseChunk<A, N>,
 }
 
@@ -18,7 +18,7 @@ where
 {
     fn clone(&self) -> Self {
         Iter {
-            indices: self.indices.clone(),
+            bitmap: self.bitmap.clone(),
             chunk: self.chunk,
         }
     }
@@ -31,11 +31,20 @@ where
     type Item = &'a A;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.indices.next().map(|index| &self.chunk.values()[index])
+        if let Some(index) = self.bitmap.first_index() {
+            self.bitmap.set(index, false);
+            unsafe {
+                let p: *const A = self.chunk.get_unchecked(index);
+                Some(&*p)
+            }
+        } else {
+            None
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(SparseChunk::<A, N>::CAPACITY))
+        let len = self.bitmap.len();
+        (len, Some(len))
     }
 }
 
@@ -58,7 +67,7 @@ where
         if let Some(index) = self.bitmap.first_index() {
             self.bitmap.set(index, false);
             unsafe {
-                let p: *mut A = &mut self.chunk.values_mut()[index];
+                let p: *mut A = self.chunk.get_unchecked_mut(index);
                 Some(&mut *p)
             }
         } else {
@@ -67,7 +76,8 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(SparseChunk::<A, N>::CAPACITY))
+        let len = self.bitmap.len();
+        (len, Some(len))
     }
 }
 
