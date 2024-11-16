@@ -700,6 +700,17 @@ impl<A, const N: usize> Chunk<A, N> {
             )
         }
     }
+
+    /// Get a pointer to the contents of the chunk as a slice
+    ///
+    /// # Safety
+    ///
+    /// The provided chunk pointer must be dereferencable
+    pub unsafe fn as_mut_slice_ptr(this: *mut Self) -> *mut [A] {
+        // Manual `len` to prevent creating a reference
+        let len = (*this).right - (*this).left;
+        ptr::slice_from_raw_parts_mut(ptr::addr_of_mut!((*this).data).cast(), len)
+    }
 }
 
 impl<A, const N: usize> Default for Chunk<A, N> {
