@@ -11,6 +11,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 -   Improved the performance of SparseChunk iterators.
 
+### ADDED
+
+-   Added `Chunk::as_mut_slice_ptr`
+
 ## [0.1.2] - 2024-01-20
 
 ### ADDED

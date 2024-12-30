@@ -13,6 +13,12 @@ In a nutshell, this crate contains the unsafe bits from [imbl], which
 may or may not be useful to anyone else, and have been split out for ease of
 auditing.
 
+## Warning: undefined behavior
+
+The current implementation of `InlineArray` is unsound if the carrier type (`T`)
+has padding in unfortunate locations; see [this issue](https://github.com/jneem/imbl-sized-chunks/issues/9).
+We will be able to fix this once const generics get more powerful.
+
 ## Documentation
 
 * [API docs](https://docs.rs/imbl-sized-chunks)
