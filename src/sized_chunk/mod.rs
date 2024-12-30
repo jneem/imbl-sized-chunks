@@ -241,26 +241,26 @@ impl<A, const N: usize> Chunk<A, N> {
 
     #[inline]
     unsafe fn ptr(&self, index: usize) -> *const A {
-        (&self.data as *const _ as *const A).add(index)
+        unsafe { (&self.data as *const _ as *const A).add(index) }
     }
 
     /// It has no bounds checks
     #[inline]
     unsafe fn mut_ptr(&mut self, index: usize) -> *mut A {
-        (&mut self.data as *mut _ as *mut A).add(index)
+        unsafe { (&mut self.data as *mut _ as *mut A).add(index) }
     }
 
     /// Copy the value at an index, discarding ownership of the copied value
     #[inline]
     unsafe fn force_read(index: usize, chunk: &mut Self) -> A {
-        chunk.ptr(index).read()
+        unsafe { chunk.ptr(index).read() }
     }
 
     /// Write a value at an index without trying to drop what's already there.
     /// It has no bounds checks.
     #[inline]
     unsafe fn force_write(index: usize, value: A, chunk: &mut Self) {
-        chunk.mut_ptr(index).write(value)
+        unsafe { chunk.mut_ptr(index).write(value) }
     }
 
     /// Copy a range within a chunk
@@ -268,9 +268,11 @@ impl<A, const N: usize> Chunk<A, N> {
     unsafe fn force_copy(from: usize, to: usize, count: usize, chunk: &mut Self) {
         if count > 0 {
             let data = &mut chunk.data as *mut _ as *mut A;
-            let from = data.add(from);
-            let to = data.add(to);
-            ptr::copy(from, to, count)
+            unsafe {
+                let from = data.add(from);
+                let to = data.add(to);
+                ptr::copy(from, to, count)
+            }
         }
     }
 
@@ -305,7 +307,9 @@ impl<A, const N: usize> Chunk<A, N> {
         let len = iter.len();
         let expected_end = write_index + len;
         for value in iter.take(len) {
-            Chunk::force_write(write_index, value, chunk);
+            unsafe {
+                Chunk::force_write(write_index, value, chunk);
+            }
             write_index += 1;
         }
         // Oops, we have a hole in here now. That would be bad, give up.
@@ -327,7 +331,7 @@ impl<A, const N: usize> Chunk<A, N> {
         other: &mut Self,
     ) {
         if count > 0 {
-            ptr::copy_nonoverlapping(chunk.ptr(from), other.mut_ptr(to), count)
+            unsafe { ptr::copy_nonoverlapping(chunk.ptr(from), other.mut_ptr(to), count) }
         }
     }
 
@@ -707,9 +711,11 @@ impl<A, const N: usize> Chunk<A, N> {
     ///
     /// The provided chunk pointer must be dereferencable
     pub unsafe fn as_mut_slice_ptr(this: *mut Self) -> *mut [A] {
-        // Manual `len` to prevent creating a reference
-        let len = (*this).right - (*this).left;
-        ptr::slice_from_raw_parts_mut(ptr::addr_of_mut!((*this).data).cast(), len)
+        unsafe {
+            // Manual `len` to prevent creating a reference
+            let len = (*this).right - (*this).left;
+            ptr::slice_from_raw_parts_mut(ptr::addr_of_mut!((*this).data).cast(), len)
+        }
     }
 }
 
@@ -827,7 +833,7 @@ impl<A, T, const N: usize> From<InlineArray<A, T>> for Chunk<A, N> {
     }
 }
 
-impl<'a, A, T, const N: usize> From<&'a mut InlineArray<A, T>> for Chunk<A, N> {
+impl<A, T, const N: usize> From<&mut InlineArray<A, T>> for Chunk<A, N> {
     fn from(array: &mut InlineArray<A, T>) -> Self {
         // The first capacity comparison is to help optimize it out
         assert!(

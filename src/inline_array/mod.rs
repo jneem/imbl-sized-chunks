@@ -149,12 +149,13 @@ impl<A, T> InlineArray<A, T> {
     #[inline]
     #[must_use]
     unsafe fn len_const(&self) -> *const usize {
-        let ptr = self
-            .data
-            .as_ptr()
-            .cast::<A>()
-            .add(Self::HEADER_SKIP)
-            .cast::<usize>();
+        let ptr = unsafe {
+            self.data
+                .as_ptr()
+                .cast::<A>()
+                .add(Self::HEADER_SKIP)
+                .cast::<usize>()
+        };
         debug_assert!(ptr as usize % mem::align_of::<usize>() == 0);
         ptr
     }
@@ -162,12 +163,13 @@ impl<A, T> InlineArray<A, T> {
     #[inline]
     #[must_use]
     pub(crate) unsafe fn len_mut(&mut self) -> *mut usize {
-        let ptr = self
-            .data
-            .as_mut_ptr()
-            .cast::<A>()
-            .add(Self::HEADER_SKIP)
-            .cast::<usize>();
+        let ptr = unsafe {
+            self.data
+                .as_mut_ptr()
+                .cast::<A>()
+                .add(Self::HEADER_SKIP)
+                .cast::<usize>()
+        };
         debug_assert!(ptr as usize % mem::align_of::<usize>() == 0);
         ptr
     }
@@ -178,12 +180,13 @@ impl<A, T> InlineArray<A, T> {
         if Self::CAPACITY == 0 {
             return NonNull::<A>::dangling().as_ptr();
         }
-        let ptr = self
-            .data
-            .as_ptr()
-            .cast::<usize>()
-            .add(Self::ELEMENT_SKIP)
-            .cast::<A>();
+        let ptr = unsafe {
+            self.data
+                .as_ptr()
+                .cast::<usize>()
+                .add(Self::ELEMENT_SKIP)
+                .cast::<A>()
+        };
         debug_assert!(ptr as usize % mem::align_of::<A>() == 0);
         ptr
     }
@@ -194,12 +197,13 @@ impl<A, T> InlineArray<A, T> {
         if Self::CAPACITY == 0 {
             return NonNull::<A>::dangling().as_ptr();
         }
-        let ptr = self
-            .data
-            .as_mut_ptr()
-            .cast::<usize>()
-            .add(Self::ELEMENT_SKIP)
-            .cast::<A>();
+        let ptr = unsafe {
+            self.data
+                .as_mut_ptr()
+                .cast::<usize>()
+                .add(Self::ELEMENT_SKIP)
+                .cast::<A>()
+        };
         debug_assert!(ptr as usize % mem::align_of::<A>() == 0);
         ptr
     }
@@ -208,24 +212,24 @@ impl<A, T> InlineArray<A, T> {
     #[must_use]
     unsafe fn ptr_at(&self, index: usize) -> *const A {
         debug_assert!(index < Self::CAPACITY);
-        self.data().add(index)
+        unsafe { self.data().add(index) }
     }
 
     #[inline]
     #[must_use]
     unsafe fn ptr_at_mut(&mut self, index: usize) -> *mut A {
         debug_assert!(index < Self::CAPACITY);
-        self.data_mut().add(index)
+        unsafe { self.data_mut().add(index) }
     }
 
     #[inline]
     unsafe fn read_at(&self, index: usize) -> A {
-        ptr::read(self.ptr_at(index))
+        unsafe { ptr::read(self.ptr_at(index)) }
     }
 
     #[inline]
     unsafe fn write_at(&mut self, index: usize, value: A) {
-        ptr::write(self.ptr_at_mut(index), value);
+        unsafe { ptr::write(self.ptr_at_mut(index), value) };
     }
 
     /// Get the length of the array.
@@ -409,7 +413,7 @@ impl<A, T> InlineArray<A, T> {
 
     #[inline]
     unsafe fn drop_contents(&mut self) {
-        ptr::drop_in_place::<[A]>(&mut **self) // uses DerefMut
+        unsafe { ptr::drop_in_place::<[A]>(&mut **self) } // uses DerefMut
     }
 
     /// Discard the contents of the array.

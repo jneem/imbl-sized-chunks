@@ -12,13 +12,13 @@ where
 }
 
 // Implement Clone instead of deriving, because we want to be Clone even if A isn't.
-impl<'a, A, const N: usize> Clone for Iter<'a, A, N>
+impl<A, const N: usize> Clone for Iter<'_, A, N>
 where
     BitsImpl<N>: Bits,
 {
     fn clone(&self) -> Self {
         Iter {
-            bitmap: self.bitmap.clone(),
+            bitmap: self.bitmap,
             chunk: self.chunk,
         }
     }
