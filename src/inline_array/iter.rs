@@ -40,7 +40,7 @@ pub struct Drain<'a, A, T> {
     pub(crate) array: &'a mut InlineArray<A, T>,
 }
 
-impl<'a, A, T> Iterator for Drain<'a, A, T> {
+impl<A, T> Iterator for Drain<'_, A, T> {
     type Item = A;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -52,12 +52,12 @@ impl<'a, A, T> Iterator for Drain<'a, A, T> {
     }
 }
 
-impl<'a, A, T> DoubleEndedIterator for Drain<'a, A, T> {
+impl<A, T> DoubleEndedIterator for Drain<'_, A, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.array.pop()
     }
 }
 
-impl<'a, A, T> ExactSizeIterator for Drain<'a, A, T> {}
+impl<A, T> ExactSizeIterator for Drain<'_, A, T> {}
 
-impl<'a, A, T> FusedIterator for Drain<'a, A, T> {}
+impl<A, T> FusedIterator for Drain<'_, A, T> {}

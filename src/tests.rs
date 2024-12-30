@@ -11,7 +11,7 @@ impl<'a> DropTest<'a> {
     }
 }
 
-impl<'a> Drop for DropTest<'a> {
+impl Drop for DropTest<'_> {
     fn drop(&mut self) {
         self.counter.fetch_sub(1, Ordering::Relaxed);
     }
