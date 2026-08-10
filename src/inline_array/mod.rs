@@ -406,10 +406,16 @@ impl<A, T> InlineArray<A, T> {
         }
 
         unsafe {
-            ptr::drop_in_place::<[A]>(&mut (**self)[len..]);
+            // Capture the removed suffix as a raw slice pointer, commit the new
+            // length, then drop. If an element destructor panics, the length is
+            // already reduced, so the `InlineArray` destructor will not revisit
+            // the already-dropped suffix (which would be a double-free / UAF).
+            let removed: *mut [A] = &mut (**self)[len..];
             *self.len_mut() = len;
+            ptr::drop_in_place::<[A]>(removed);
         }
     }
+
 
     #[inline]
     unsafe fn drop_contents(&mut self) {
@@ -421,10 +427,15 @@ impl<A, T> InlineArray<A, T> {
     /// Time: O(n)
     pub fn clear(&mut self) {
         unsafe {
-            self.drop_contents();
+            // Capture the initialized slice as a raw pointer, reset the length,
+            // then drop. If an element destructor panics, the length is already
+            // zeroed, so the `InlineArray` destructor will not revisit the
+            // already-dropped elements (which would be a double-free / UAF).
+            let removed: *mut [A] = &mut **self; // uses DerefMut
             *self.len_mut() = 0;
+            ptr::drop_in_place::<[A]>(removed);
         }
-    }
+    } 
 
     /// Construct an iterator that drains values from the front of the array.
     pub fn drain(&mut self) -> Drain<'_, A, T> {
@@ -774,5 +785,69 @@ mod test {
             chunk.first().unwrap() as *const _ as usize % mem::align_of::<BigAlign>(),
             0
         );
+    }
+
+    // Panic-safety regression tests. Each removal must commit the length before
+    // running destructors, so a panicking element Drop cannot leave
+    // already-dropped elements inside the range the `InlineArray` destructor
+    // later traverses (a double-free / UAF). State is borrowed by the elements,
+    // so the tests share no globals and run fine in parallel.
+    mod panic_safety {
+        use super::InlineArray;
+        use std::cell::Cell;
+        use std::panic::{catch_unwind, AssertUnwindSafe};
+
+        struct Item<'a> {
+            id: usize,
+            panic_at: usize,
+            drops: &'a Cell<usize>,
+            armed: &'a Cell<bool>,
+            _heap: String,
+        }
+
+        impl Drop for Item<'_> {
+            fn drop(&mut self) {
+                self.drops.set(self.drops.get() + 1);
+                if self.id == self.panic_at && self.armed.replace(false) {
+                    panic!("drop panic");
+                }
+            }
+        }
+
+        fn check(panic_at: usize, op: impl FnOnce(&mut InlineArray<Item<'_>, [usize; 32]>)) {
+            let drops = Cell::new(0);
+            let armed = Cell::new(true);
+            let mut array: InlineArray<Item<'_>, [usize; 32]> = InlineArray::new();
+            for id in 0..4 {
+                array.push(Item {
+                    id,
+                    panic_at,
+                    drops: &drops,
+                    armed: &armed,
+                    _heap: format!("{id}"),
+                });
+            }
+
+            let hook = std::panic::take_hook();
+            std::panic::set_hook(Box::new(|_| {}));
+            let r = catch_unwind(AssertUnwindSafe(|| op(&mut array)));
+            std::panic::set_hook(hook);
+
+            assert!(r.is_err(), "expected the drop to unwind");
+            drop(array);
+            assert!(drops.get() <= 4, "double-drop: {} drops for 4 items", drops.get());
+        }
+
+        #[test]
+        fn clear_panic_safe() {
+            // clear() drops the whole range; element 1 panics.
+            check(1, |a| a.clear());
+        }
+
+        #[test]
+        fn truncate_panic_safe() {
+            // truncate(1) drops the suffix [1..4]; element 2 panics.
+            check(2, |a| a.truncate(1));
+        }
     }
 }

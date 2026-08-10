@@ -413,8 +413,13 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items dropped
     pub fn drop_left(&mut self, index: usize) {
         if index > 0 {
-            unsafe { ptr::drop_in_place(&mut self[..index]) }
+            // Capture the removed prefix as a raw slice pointer, commit the
+            // metadata, then drop. If an element destructor panics, `left` is
+            // already advanced, so the `Chunk` destructor will not revisit the
+            // already-dropped prefix (which would be a double-free / UAF).
+            let removed: *mut [A] = &mut self[..index];
             self.left += index;
+            unsafe { ptr::drop_in_place(removed) }
         }
     }
 
@@ -425,8 +430,13 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items dropped
     pub fn drop_right(&mut self, index: usize) {
         if index != self.len() {
-            unsafe { ptr::drop_in_place(&mut self[index..]) }
+            // Capture the removed suffix as a raw slice pointer, commit the
+            // metadata, then drop. If an element destructor panics, `right` is
+            // already reduced, so the `Chunk` destructor will not revisit the
+            // already-dropped suffix (which would be a double-free / UAF).
+            let removed: *mut [A] = &mut self[index..];
             self.right = self.left + index;
+            unsafe { ptr::drop_in_place(removed) }
         }
     }
 
@@ -680,10 +690,15 @@ impl<A, const N: usize> Chunk<A, N> {
     ///
     /// Time: O(n)
     pub fn clear(&mut self) {
-        unsafe { ptr::drop_in_place(self.as_mut_slice()) }
+        // Capture the initialized slice as a raw pointer, reset the metadata,
+        // then drop. If an element destructor panics, `left`/`right` are already
+        // zeroed, so the `Chunk` destructor will not revisit the already-dropped
+        // elements (which would be a double-free / UAF).
+        let removed: *mut [A] = self.as_mut_slice();
         self.left = 0;
         self.right = 0;
-    }
+        unsafe { ptr::drop_in_place(removed) }
+    } 
 
     /// Get a reference to the contents of the chunk as a slice.
     pub fn as_slice(&self) -> &[A] {
@@ -1348,5 +1363,77 @@ mod test {
     #[should_panic(expected = "assertion failed: Self::CAPACITY >= 2")]
     fn pair_on_empty() {
         Chunk::<usize, 0>::pair(1, 2);
+    }
+
+    // Panic-safety regression tests. Each removal must commit its metadata
+    // (`left`/`right`) before running destructors, so a panicking element Drop
+    // cannot leave already-dropped elements inside the range the `Chunk`
+    // destructor later traverses (a double-free / UAF). State is borrowed by
+    // the elements, so the tests share no globals and run fine in parallel.
+    mod panic_safety {
+        use super::Chunk;
+        use std::cell::Cell;
+        use std::panic::{catch_unwind, AssertUnwindSafe};
+
+        // Owns a heap allocation so a re-drop is a real double-free / UAF.
+        // Counts every drop; the element at `panic_at` panics the first time
+        // it is dropped (armed guards against a second panic during unwinding).
+        struct Item<'a> {
+            id: usize,
+            panic_at: usize,
+            drops: &'a Cell<usize>,
+            armed: &'a Cell<bool>,
+            _heap: String,
+        }
+
+        impl Drop for Item<'_> {
+            fn drop(&mut self) {
+                self.drops.set(self.drops.get() + 1);
+                if self.id == self.panic_at && self.armed.replace(false) {
+                    panic!("drop panic");
+                }
+            }
+        }
+
+        // Fill with 4 items, run `op` under catch_unwind, then drop. With no
+        // double-drop the total drop count stays <= 4; a re-drop pushes it over.
+        fn check(panic_at: usize, op: impl FnOnce(&mut Chunk<Item<'_>, 8>)) {
+            let drops = Cell::new(0);
+            let armed = Cell::new(true);
+            let mut chunk: Chunk<Item<'_>, 8> = Chunk::new();
+            for id in 0..4 {
+                chunk.push_back(Item {
+                    id,
+                    panic_at,
+                    drops: &drops,
+                    armed: &armed,
+                    _heap: format!("{id}"),
+                });
+            }
+
+            let hook = std::panic::take_hook();
+            std::panic::set_hook(Box::new(|_| {}));
+            let r = catch_unwind(AssertUnwindSafe(|| op(&mut chunk)));
+            std::panic::set_hook(hook);
+
+            assert!(r.is_err(), "expected the drop to unwind");
+            drop(chunk);
+            assert!(drops.get() <= 4, "double-drop: {} drops for 4 items", drops.get());
+        }
+
+        #[test]
+        fn clear_panic_safe() {
+            check(1, |c| c.clear());
+        }
+
+        #[test]
+        fn drop_left_panic_safe() {
+            check(1, |c| c.drop_left(3));
+        }
+
+        #[test]
+        fn drop_right_panic_safe() {
+            check(1, |c| c.drop_right(0));
+        }
     }
 }
