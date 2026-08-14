@@ -77,7 +77,6 @@ impl<A, const N: usize> Drop for RingBuffer<A, N> {
 impl<A, const N: usize> HasLength for RingBuffer<A, N> {
     /// Get the length of the ring buffer.
     #[inline]
-    #[must_use]
     fn len(&self) -> usize {
         self.length
     }
@@ -85,7 +84,6 @@ impl<A, const N: usize> HasLength for RingBuffer<A, N> {
 
 impl<A, const N: usize> Array for RingBuffer<A, N> {
     /// Get a reference to the value at a given index.
-    #[must_use]
     fn get(&self, index: usize) -> Option<&A> {
         if index >= self.len() {
             None
@@ -97,7 +95,6 @@ impl<A, const N: usize> Array for RingBuffer<A, N> {
 
 impl<A, const N: usize> ArrayMut for RingBuffer<A, N> {
     /// Get a mutable reference to the value at a given index.
-    #[must_use]
     fn get_mut(&mut self, index: usize) -> Option<&mut A> {
         if index >= self.len() {
             None
@@ -762,7 +759,6 @@ impl<A, const N: usize> RingBuffer<A, N> {
 
 impl<A, const N: usize> Default for RingBuffer<A, N> {
     #[inline]
-    #[must_use]
     fn default() -> Self {
         Self::new()
     }
@@ -787,7 +783,6 @@ impl<A: Clone, const N: usize> Clone for RingBuffer<A, N> {
 impl<A, const N: usize> Index<usize> for RingBuffer<A, N> {
     type Output = A;
 
-    #[must_use]
     fn index(&self, index: usize) -> &Self::Output {
         if index >= self.len() {
             panic!(
@@ -801,7 +796,6 @@ impl<A, const N: usize> Index<usize> for RingBuffer<A, N> {
 }
 
 impl<A, const N: usize> IndexMut<usize> for RingBuffer<A, N> {
-    #[must_use]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         if index >= self.len() {
             panic!(
@@ -816,7 +810,6 @@ impl<A, const N: usize> IndexMut<usize> for RingBuffer<A, N> {
 
 impl<A: PartialEq, const N: usize> PartialEq for RingBuffer<A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -828,7 +821,6 @@ where
     A: PartialEq,
 {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &PrimSlice) -> bool {
         let other = other.borrow();
         self.len() == other.len() && self.iter().eq(other.iter())
@@ -857,7 +849,6 @@ impl<A: Eq, const N: usize> Eq for RingBuffer<A, N> {}
 
 impl<A: PartialOrd, const N: usize> PartialOrd for RingBuffer<A, N> {
     #[inline]
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.iter().partial_cmp(other.iter())
     }
@@ -865,7 +856,6 @@ impl<A: PartialOrd, const N: usize> PartialOrd for RingBuffer<A, N> {
 
 impl<A: Ord, const N: usize> Ord for RingBuffer<A, N> {
     #[inline]
-    #[must_use]
     fn cmp(&self, other: &Self) -> Ordering {
         self.iter().cmp(other.iter())
     }
@@ -939,7 +929,6 @@ impl<const N: usize> std::io::Read for RingBuffer<u8, N> {
 }
 
 impl<A, const N: usize> FromIterator<A> for RingBuffer<A, N> {
-    #[must_use]
     fn from_iter<I: IntoIterator<Item = A>>(iter: I) -> Self {
         let mut buffer = RingBuffer::new();
         buffer.extend(iter);
@@ -952,7 +941,6 @@ impl<A, const N: usize> IntoIterator for RingBuffer<A, N> {
     type IntoIter = OwnedIter<A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         OwnedIter { buffer: self }
     }
@@ -963,7 +951,6 @@ impl<'a, A, const N: usize> IntoIterator for &'a RingBuffer<A, N> {
     type IntoIter = Iter<'a, A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -974,7 +961,6 @@ impl<'a, A, const N: usize> IntoIterator for &'a mut RingBuffer<A, N> {
     type IntoIter = IterMut<'a, A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }

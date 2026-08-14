@@ -9,7 +9,6 @@ pub(crate) struct RawIndex<const N: usize>(usize);
 
 impl<const N: usize> Clone for RawIndex<N> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         self.0.into()
     }
@@ -44,7 +43,6 @@ impl<const N: usize> RawIndex<N> {
 
 impl<const N: usize> From<usize> for RawIndex<N> {
     #[inline]
-    #[must_use]
     fn from(index: usize) -> Self {
         debug_assert!(index < N);
         RawIndex(index)
@@ -53,7 +51,6 @@ impl<const N: usize> From<usize> for RawIndex<N> {
 
 impl<const N: usize> PartialEq for RawIndex<N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -64,7 +61,6 @@ impl<const N: usize> Eq for RawIndex<N> {}
 impl<const N: usize> Add for RawIndex<N> {
     type Output = RawIndex<N>;
     #[inline]
-    #[must_use]
     fn add(self, other: Self) -> Self::Output {
         self + other.0
     }
@@ -73,7 +69,6 @@ impl<const N: usize> Add for RawIndex<N> {
 impl<const N: usize> Add<usize> for RawIndex<N> {
     type Output = RawIndex<N>;
     #[inline]
-    #[must_use]
     fn add(self, other: usize) -> Self::Output {
         let mut result = self.0 + other;
         while result >= N {
@@ -96,7 +91,6 @@ impl<const N: usize> AddAssign<usize> for RawIndex<N> {
 impl<const N: usize> Sub for RawIndex<N> {
     type Output = RawIndex<N>;
     #[inline]
-    #[must_use]
     fn sub(self, other: Self) -> Self::Output {
         self - other.0
     }
@@ -105,7 +99,6 @@ impl<const N: usize> Sub for RawIndex<N> {
 impl<const N: usize> Sub<usize> for RawIndex<N> {
     type Output = RawIndex<N>;
     #[inline]
-    #[must_use]
     fn sub(self, other: usize) -> Self::Output {
         let mut start = self.0;
         while other > start {
@@ -144,7 +137,6 @@ impl<const N: usize> Iterator for IndexIter<N> {
     }
 
     #[inline]
-    #[must_use]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.remaining, Some(self.remaining))
     }

@@ -25,7 +25,6 @@ pub struct Slice<'a, A, const N: usize> {
 impl<'a, A: 'a, const N: usize> HasLength for Slice<'a, A, N> {
     /// Get the length of the slice.
     #[inline]
-    #[must_use]
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
@@ -34,7 +33,6 @@ impl<'a, A: 'a, const N: usize> HasLength for Slice<'a, A, N> {
 impl<'a, A: 'a, const N: usize> Array for Slice<'a, A, N> {
     /// Get a reference to the value at a given index.
     #[inline]
-    #[must_use]
     fn get(&self, index: usize) -> Option<&A> {
         if index >= self.len() {
             None
@@ -135,7 +133,6 @@ impl<'a, A: 'a, const N: usize> Slice<'a, A, N> {
 
 impl<'a, A: 'a, const N: usize> From<&'a RingBuffer<A, N>> for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn from(buffer: &'a RingBuffer<A, N>) -> Self {
         Slice {
             range: Range {
@@ -149,7 +146,6 @@ impl<'a, A: 'a, const N: usize> From<&'a RingBuffer<A, N>> for Slice<'a, A, N> {
 
 impl<'a, A: 'a, const N: usize> Clone for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn clone(&self) -> Self {
         Slice {
             buffer: self.buffer,
@@ -162,7 +158,6 @@ impl<'a, A: 'a, const N: usize> Index<usize> for Slice<'a, A, N> {
     type Output = A;
 
     #[inline]
-    #[must_use]
     fn index(&self, index: usize) -> &Self::Output {
         self.buffer.index(self.range.start + index)
     }
@@ -170,7 +165,6 @@ impl<'a, A: 'a, const N: usize> Index<usize> for Slice<'a, A, N> {
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -178,7 +172,6 @@ impl<'a, A: PartialEq + 'a, const N: usize> PartialEq for Slice<'a, A, N> {
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<SliceMut<'a, A, N>> for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &SliceMut<'a, A, N>) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -186,7 +179,6 @@ impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<SliceMut<'a, A, N>> for Sl
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<RingBuffer<A, N>> for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &RingBuffer<A, N>) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -197,7 +189,6 @@ where
     S: Borrow<[A]>,
 {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &S) -> bool {
         let other = other.borrow();
         self.len() == other.len() && self.iter().eq(other.iter())
@@ -208,7 +199,6 @@ impl<'a, A: Eq + 'a, const N: usize> Eq for Slice<'a, A, N> {}
 
 impl<'a, A: PartialOrd + 'a, const N: usize> PartialOrd for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.iter().partial_cmp(other.iter())
     }
@@ -216,7 +206,6 @@ impl<'a, A: PartialOrd + 'a, const N: usize> PartialOrd for Slice<'a, A, N> {
 
 impl<'a, A: Ord + 'a, const N: usize> Ord for Slice<'a, A, N> {
     #[inline]
-    #[must_use]
     fn cmp(&self, other: &Self) -> Ordering {
         self.iter().cmp(other.iter())
     }
@@ -243,7 +232,6 @@ impl<'a, A: 'a, const N: usize> IntoIterator for &'a Slice<'a, A, N> {
     type IntoIter = Iter<'a, A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -260,7 +248,6 @@ pub struct SliceMut<'a, A, const N: usize> {
 impl<'a, A: 'a, const N: usize> HasLength for SliceMut<'a, A, N> {
     /// Get the length of the slice.
     #[inline]
-    #[must_use]
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
@@ -269,7 +256,6 @@ impl<'a, A: 'a, const N: usize> HasLength for SliceMut<'a, A, N> {
 impl<'a, A: 'a, const N: usize> Array for SliceMut<'a, A, N> {
     /// Get a reference to the value at a given index.
     #[inline]
-    #[must_use]
     fn get(&self, index: usize) -> Option<&A> {
         if index >= self.len() {
             None
@@ -282,7 +268,6 @@ impl<'a, A: 'a, const N: usize> Array for SliceMut<'a, A, N> {
 impl<'a, A: 'a, const N: usize> ArrayMut for SliceMut<'a, A, N> {
     /// Get a mutable reference to the value at a given index.
     #[inline]
-    #[must_use]
     fn get_mut(&mut self, index: usize) -> Option<&mut A> {
         if index >= self.len() {
             None
@@ -416,7 +401,6 @@ impl<'a, A: 'a, const N: usize> SliceMut<'a, A, N> {
 }
 
 impl<'a, A: 'a, const N: usize> From<&'a mut RingBuffer<A, N>> for SliceMut<'a, A, N> {
-    #[must_use]
     fn from(buffer: &'a mut RingBuffer<A, N>) -> Self {
         SliceMut {
             range: Range {
@@ -430,7 +414,6 @@ impl<'a, A: 'a, const N: usize> From<&'a mut RingBuffer<A, N>> for SliceMut<'a, 
 
 impl<'a, A: 'a, const N: usize> Into<Slice<'a, A, N>> for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn into(self) -> Slice<'a, A, N> {
         self.unmut()
     }
@@ -440,7 +423,6 @@ impl<'a, A: 'a, const N: usize> Index<usize> for SliceMut<'a, A, N> {
     type Output = A;
 
     #[inline]
-    #[must_use]
     fn index(&self, index: usize) -> &Self::Output {
         self.buffer.index(self.range.start + index)
     }
@@ -448,7 +430,6 @@ impl<'a, A: 'a, const N: usize> Index<usize> for SliceMut<'a, A, N> {
 
 impl<'a, A: 'a, const N: usize> IndexMut<usize> for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         self.buffer.index_mut(self.range.start + index)
     }
@@ -456,7 +437,6 @@ impl<'a, A: 'a, const N: usize> IndexMut<usize> for SliceMut<'a, A, N> {
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -464,7 +444,6 @@ impl<'a, A: PartialEq + 'a, const N: usize> PartialEq for SliceMut<'a, A, N> {
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<Slice<'a, A, N>> for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Slice<'a, A, N>) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -472,7 +451,6 @@ impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<Slice<'a, A, N>> for Slice
 
 impl<'a, A: PartialEq + 'a, const N: usize> PartialEq<RingBuffer<A, N>> for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &RingBuffer<A, N>) -> bool {
         self.len() == other.len() && self.iter().eq(other.iter())
     }
@@ -483,7 +461,6 @@ where
     S: Borrow<[A]>,
 {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &S) -> bool {
         let other = other.borrow();
         self.len() == other.len() && self.iter().eq(other.iter())
@@ -494,7 +471,6 @@ impl<'a, A: Eq + 'a, const N: usize> Eq for SliceMut<'a, A, N> {}
 
 impl<'a, A: PartialOrd + 'a, const N: usize> PartialOrd for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.iter().partial_cmp(other.iter())
     }
@@ -502,7 +478,6 @@ impl<'a, A: PartialOrd + 'a, const N: usize> PartialOrd for SliceMut<'a, A, N> {
 
 impl<'a, A: Ord + 'a, const N: usize> Ord for SliceMut<'a, A, N> {
     #[inline]
-    #[must_use]
     fn cmp(&self, other: &Self) -> Ordering {
         self.iter().cmp(other.iter())
     }
@@ -529,7 +504,6 @@ impl<'a, 'b, A: 'a, const N: usize> IntoIterator for &'a SliceMut<'a, A, N> {
     type IntoIter = Iter<'a, A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -540,7 +514,6 @@ impl<'a, 'b, A: 'a, const N: usize> IntoIterator for &'a mut SliceMut<'a, A, N> 
     type IntoIter = IterMut<'a, A, N>;
 
     #[inline]
-    #[must_use]
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }

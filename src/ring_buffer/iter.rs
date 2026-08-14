@@ -36,7 +36,6 @@ impl<'a, A, const N: usize> Iterator for Iter<'a, A, N> {
     }
 
     #[inline]
-    #[must_use]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.remaining, Some(self.remaining))
     }
@@ -110,7 +109,6 @@ where
     }
 
     #[inline]
-    #[must_use]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.remaining, Some(self.remaining))
     }
@@ -149,7 +147,6 @@ impl<'a, A: 'a, const N: usize> Iterator for Drain<'a, A, N> {
     }
 
     #[inline]
-    #[must_use]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.buffer.len(), Some(self.buffer.len()))
     }
@@ -180,7 +177,6 @@ impl<A, const N: usize> Iterator for OwnedIter<A, N> {
     }
 
     #[inline]
-    #[must_use]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (self.buffer.len(), Some(self.buffer.len()))
     }
