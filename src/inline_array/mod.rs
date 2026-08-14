@@ -19,6 +19,8 @@ use core::ptr::NonNull;
 use core::slice::{from_raw_parts, from_raw_parts_mut, Iter as SliceIter, IterMut as SliceIterMut};
 
 mod iter;
+use crate::drop_later;
+
 pub use self::iter::{Drain, Iter};
 
 /// A fixed capacity array sized to match some other type `T`.
@@ -406,14 +408,14 @@ impl<A, T> InlineArray<A, T> {
         }
 
         unsafe {
-            ptr::drop_in_place::<[A]>(&mut (**self)[len..]);
+            let _guard = drop_later(&mut (**self)[len..]);
             *self.len_mut() = len;
         }
     }
 
     #[inline]
     unsafe fn drop_contents(&mut self) {
-        unsafe { ptr::drop_in_place::<[A]>(&mut **self) } // uses DerefMut
+        unsafe { ptr::drop_in_place::<[A]>(DerefMut::deref_mut(self)) }
     }
 
     /// Discard the contents of the array.
@@ -421,7 +423,7 @@ impl<A, T> InlineArray<A, T> {
     /// Time: O(n)
     pub fn clear(&mut self) {
         unsafe {
-            self.drop_contents();
+            let _guard = drop_later(DerefMut::deref_mut(self));
             *self.len_mut() = 0;
         }
     }

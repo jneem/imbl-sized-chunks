@@ -119,6 +119,32 @@ pub mod ring_buffer;
 #[cfg(feature = "ringbuffer")]
 pub use crate::ring_buffer::RingBuffer;
 
+/// Like [`std::ptr::drop_in_place`], but deferred until the end of scope.
+///
+/// We often want to drop some elements of our chunk and then update the
+/// metadata (like [`Chunk::left`] or [`Chunk::right`]). It's inconvenient to do the
+/// metadata changes first (because changing the metadata makes our convenience
+/// indexing methods work differently) and it's dangerous to do the metadata
+/// changes second (because some element's drop might panic and we'll never do
+/// the metadata changes).
+///
+/// This function lets us capture the slice to be dropped (with the old metadata
+/// still in place) and then update the metadata. The slice's elements will then
+/// be dropped at the end of the scope.
+unsafe fn drop_later<T: ?Sized>(x: *mut T) -> DropGuard<T> {
+    DropGuard(x)
+}
+
+struct DropGuard<T: ?Sized>(*mut T);
+
+impl<T: ?Sized> Drop for DropGuard<T> {
+    fn drop(&mut self) {
+        unsafe {
+            std::ptr::drop_in_place(self.0);
+        }
+    }
+}
+
 #[cfg(test)]
 mod covariance_tests {
     #![allow(unused_assignments, unused_variables, dead_code)]

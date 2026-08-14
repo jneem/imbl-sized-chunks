@@ -467,11 +467,12 @@ impl<A, const N: usize> RingBuffer<A, N> {
             if index > self.len() {
                 panic!("RingBuffer::drop_left: index out of bounds");
             }
-            for i in self.range().take(index) {
-                unsafe { self.force_drop(i) }
-            }
+            let range = self.range().take(index);
             self.origin += index;
             self.length -= index;
+            for i in range {
+                unsafe { self.force_drop(i) }
+            }
         }
     }
 
@@ -750,11 +751,12 @@ impl<A, const N: usize> RingBuffer<A, N> {
     ///
     /// Time: O(n)
     pub fn clear(&mut self) {
-        for i in self.range() {
-            unsafe { self.force_drop(i) };
-        }
+        let range = self.range();
         self.origin = 0.into();
         self.length = 0;
+        for i in range {
+            unsafe { self.force_drop(i) };
+        }
     }
 }
 

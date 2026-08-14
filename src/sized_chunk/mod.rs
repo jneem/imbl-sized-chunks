@@ -6,6 +6,7 @@
 //!
 //! See [`Chunk`](struct.Chunk.html)
 
+use crate::drop_later;
 use crate::inline_array::InlineArray;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
@@ -413,7 +414,7 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items dropped
     pub fn drop_left(&mut self, index: usize) {
         if index > 0 {
-            unsafe { ptr::drop_in_place(&mut self[..index]) }
+            let _guard = unsafe { drop_later(&mut self[..index]) };
             self.left += index;
         }
     }
@@ -425,7 +426,7 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items dropped
     pub fn drop_right(&mut self, index: usize) {
         if index != self.len() {
-            unsafe { ptr::drop_in_place(&mut self[index..]) }
+            let _guard = unsafe { drop_later(&mut self[index..]) };
             self.right = self.left + index;
         }
     }
@@ -680,7 +681,7 @@ impl<A, const N: usize> Chunk<A, N> {
     ///
     /// Time: O(n)
     pub fn clear(&mut self) {
-        unsafe { ptr::drop_in_place(self.as_mut_slice()) }
+        let _guard = unsafe { drop_later(self.as_mut_slice()) };
         self.left = 0;
         self.right = 0;
     }
