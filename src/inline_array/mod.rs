@@ -223,8 +223,8 @@ impl<A, T> InlineArray<A, T> {
 
             let len_ptr = base_ptr.add(Self::HEADER_SKIP).cast::<usize>();
             let array_ptr = base_ptr.add(Self::ELEMENT_SKIP).cast::<A>();
-            debug_assert!(array_ptr.is_aligned());
-            debug_assert!(len_ptr.is_aligned());
+            debug_assert!(array_ptr as usize % mem::align_of::<A>() == 0);
+            debug_assert!(len_ptr as usize % mem::align_of::<usize>() == 0);
 
             let array = from_raw_parts_mut(array_ptr, *len_ptr);
             (array, &mut *len_ptr)
