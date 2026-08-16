@@ -98,6 +98,11 @@
 #![deny(nonstandard_style)]
 #![warn(unreachable_pub, missing_docs)]
 #![cfg_attr(test, deny(warnings))]
+// We support rust 1.56, which considers an unsafe block inside an `unsafe
+// fn` to be unnecessary and worns. On the other hand, newer linters require
+// unsafe blocks for unsafe operations in an unsafe function. We handle this
+// discrepancy by silencing the warning.
+#![cfg_attr(test, allow(unused_unsafe))]
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 
 pub mod inline_array;
