@@ -709,7 +709,20 @@ impl<A, const N: usize> Chunk<A, N> {
         }
     }
 
-    /// Get a pointer to the contents of the chunk as a slice
+    /// Get a pointer to the contents of the chunk as a slice.
+    ///
+    /// # Safety
+    ///
+    /// The provided chunk pointer must be dereferencable
+    pub unsafe fn as_slice_ptr(this: *const Self) -> *const [A] {
+        unsafe {
+            // Manual `len` to prevent creating a reference
+            let len = (*this).right - (*this).left;
+            ptr::slice_from_raw_parts(ptr::addr_of!((*this).data).cast(), len)
+        }
+    }
+
+    /// Get a pointer to the contents of the chunk as a mutable slice.
     ///
     /// # Safety
     ///
