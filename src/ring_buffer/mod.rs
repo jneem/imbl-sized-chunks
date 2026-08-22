@@ -650,7 +650,7 @@ impl<A, const N: usize> RingBuffer<A, N> {
     {
         let iter = iter.into_iter();
         let insert_size = iter.len();
-        if self.len() + insert_size > Self::CAPACITY {
+        if self.len().checked_add(insert_size).unwrap() > Self::CAPACITY {
             panic!(
                 "Chunk::insert_from: chunk cannot fit {} elements",
                 insert_size

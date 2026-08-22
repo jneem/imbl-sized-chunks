@@ -291,6 +291,9 @@ impl<A, const N: usize> Chunk<A, N> {
     ///
     /// If the iterator panics, the chunk becomes conceptually empty and will leak any previous
     /// elements (even the ones outside the range).
+    ///
+    /// This method panics (and leaks any previous elements) if the iterator's reported length
+    /// is so large that it causes arithmetic overflow.
     #[inline]
     unsafe fn write_from_iter<I>(mut write_index: usize, iter: I, chunk: &mut Self)
     where
@@ -306,7 +309,7 @@ impl<A, const N: usize> Chunk<A, N> {
         let left = replace(&mut chunk.left, 0);
         let right = replace(&mut chunk.right, 0);
         let len = iter.len();
-        let expected_end = write_index + len;
+        let expected_end = write_index.checked_add(len).unwrap();
         for value in iter.take(len) {
             unsafe {
                 Chunk::force_write(write_index, value, chunk);
@@ -607,7 +610,7 @@ impl<A, const N: usize> Chunk<A, N> {
     {
         let iter = iter.into_iter();
         let insert_size = iter.len();
-        if self.len() + insert_size > Self::CAPACITY {
+        if self.len().checked_add(insert_size).unwrap() > Self::CAPACITY {
             panic!(
                 "Chunk::insert_from: chunk cannot fit {} elements",
                 insert_size
