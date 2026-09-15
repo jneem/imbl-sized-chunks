@@ -200,7 +200,7 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items moved
     pub fn from_front(other: &mut Self, count: usize) -> Self {
         let other_len = other.len();
-        debug_assert!(count <= other_len);
+        assert!(count <= other_len);
         let mut chunk = Self::new();
         unsafe { Chunk::force_copy_to(other.left, 0, count, other, &mut chunk) };
         chunk.right = count;
@@ -214,7 +214,7 @@ impl<A, const N: usize> Chunk<A, N> {
     /// Time: O(n) for the number of items moved
     pub fn from_back(other: &mut Self, count: usize) -> Self {
         let other_len = other.len();
-        debug_assert!(count <= other_len);
+        assert!(count <= other_len);
         let mut chunk = Self::new();
         unsafe { Chunk::force_copy_to(other.right - count, 0, count, other, &mut chunk) };
         chunk.right = count;
