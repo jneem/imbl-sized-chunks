@@ -389,8 +389,8 @@ impl<A, T> InlineArray<A, T> {
             unsafe {
                 let src = self.ptr_at_mut(index);
                 let value = ptr::read(src);
+                ptr::copy(src.add(1), src, self.len() - index - 1);
                 *self.len_mut() -= 1;
-                ptr::copy(src.add(1), src, self.len() - index);
                 Some(value)
             }
         }
@@ -657,6 +657,16 @@ mod test {
     use super::*;
     use crate::tests::DropTest;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[test]
+    fn remove_shifts_tail() {
+        let mut chunk: InlineArray<u64, [u64; 8]> = InlineArray::new();
+        chunk.push(1);
+        chunk.push(2);
+        chunk.push(3);
+        assert_eq!(chunk.remove(0), Some(1));
+        assert_eq!(&chunk[..], &[2, 3]);
+    }
 
     #[test]
     fn dropping() {
