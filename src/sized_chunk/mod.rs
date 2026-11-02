@@ -718,7 +718,10 @@ impl<A, const N: usize> Chunk<A, N> {
         unsafe {
             // Manual `len` to prevent creating a reference
             let len = (*this).right - (*this).left;
-            ptr::slice_from_raw_parts_mut(ptr::addr_of_mut!((*this).data).cast(), len)
+            let first = ptr::addr_of_mut!((*this).data)
+                .cast::<A>()
+                .add((*this).left);
+            ptr::slice_from_raw_parts_mut(first, len)
         }
     }
 }
@@ -993,6 +996,44 @@ mod test {
         from.push(1);
 
         let _ = Chunk::<u8, 1>::from(from);
+    }
+
+    /// `as_mut_slice_ptr` must start where `as_slice` does. After `pop_front`
+    /// the elements no longer start at index 0, and it used to point there
+    /// anyway.
+    #[test]
+    fn as_mut_slice_ptr_after_pop_front() {
+        let mut chunk = Chunk::<u32, 4>::new();
+        chunk.push_back(1);
+        chunk.push_back(2);
+        chunk.push_back(3);
+        assert_eq!(chunk.pop_front(), 1);
+
+        let expected = chunk.as_slice().as_ptr();
+        let slice = unsafe { Chunk::as_mut_slice_ptr(&mut chunk) };
+        assert_eq!(slice as *const u32, expected);
+        assert_eq!(slice.len(), 2);
+
+        unsafe { (*slice)[0] = 20 };
+        assert_eq!(chunk.as_slice(), &[20, 3]);
+    }
+
+    /// `push_front` into an empty chunk places the elements at the back, which
+    /// is how imbl's `Vector` fills chunks from the front; its `FocusMut` then
+    /// swapped through a slice that began at index 0, among uninitialized slots.
+    #[test]
+    fn as_mut_slice_ptr_after_push_front() {
+        let mut chunk = Chunk::<String, 4>::new();
+        chunk.push_front("b".to_string());
+        chunk.push_front("a".to_string());
+
+        let expected = chunk.as_slice().as_ptr();
+        let slice = unsafe { Chunk::as_mut_slice_ptr(&mut chunk) };
+        assert_eq!(slice as *const String, expected);
+        assert_eq!(slice.len(), 2);
+
+        unsafe { (*slice).swap(0, 1) };
+        assert_eq!(chunk.as_slice(), &["b", "a"]);
     }
 
     struct DropDetector(u32);
